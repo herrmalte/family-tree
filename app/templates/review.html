@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Review suggestions · Family Archive{% endblock %}
+{% block content %}
+<h1>Suggested matches</h1>
+<p class="muted">
+  Faces with similarity between <strong>{{ '%.2f' % thresholds.suggest }}</strong> and
+  <strong>{{ '%.2f' % thresholds.auto }}</strong> against a seed.
+  Confirm or reject each suggestion. Above the upper threshold, faces are auto-confirmed.
+</p>
+
+<form class="inline" action="/faces/rematch-all" method="post">
+  <button class="btn" type="submit">Re-run matching against all seeds</button>
+</form>
+
+{% if faces %}
+<div class="face-grid">
+  {% for face in faces %}
+    <div class="face-card">
+      <a href="/photos/{{ face.photo_id }}"><img src="{{ face.crop_path | media_face }}" alt="face"></a>
+      <p><strong>{{ face.person.name if face.person else '—' }}</strong></p>
+      <p><small>{{ '%.0f' % (face.confidence * 100) }}% confidence · quality {{ '%.2f' % face.quality }}</small></p>
+
+      <form class="inline" action="/faces/{{ face.id }}/confirm" method="post">
+        <input type="hidden" name="next_url" value="/faces/review">
+        <button class="btn small primary" type="submit">Confirm</button>
+      </form>
+      <form class="inline" action="/faces/{{ face.id }}/reject" method="post">
+        <input type="hidden" name="next_url" value="/faces/review">
+        <button class="btn small ghost" type="submit">Reject</button>
+      </form>
+
+      <details>
+        <summary>Reassign</summary>
+        <form class="inline-form" action="/faces/{{ face.id }}/assign" method="post">
+          <input type="hidden" name="next_url" value="/faces/review">
+          <input type="hidden" name="confirm" value="true">
+          <select name="person_id" required>
+            {% for p in people %}
+              <option value="{{ p.id }}" {% if face.person_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+            {% endfor %}
+          </select>
+          <label class="inline-check"><input type="checkbox" name="as_seed" value="true"> seed</label>
+          <button class="btn small" type="submit">Save</button>
+        </form>
+      </details>
+    </div>
+  {% endfor %}
+</div>
+{% else %}
+  <p class="muted">Nothing to review right now. Add more seed faces or upload photos.</p>
+{% endif %}
+{% endblock %}

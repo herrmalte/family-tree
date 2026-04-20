@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}People · Family Archive{% endblock %}
+{% block content %}
+<h1>People</h1>
+
+<form class="card form" method="post" action="/people">
+  <h2>Add a person</h2>
+  <div class="row">
+    <label class="field"><span>Name</span><input type="text" name="name" required></label>
+    <label class="field"><span>Relationship tags</span>
+      <input type="text" name="relationship_tags" placeholder="grandmother, paternal"></label>
+  </div>
+  <div class="row">
+    <label class="field"><span>Birth date</span><input type="text" name="birth_date" placeholder="1912"></label>
+    <label class="field"><span>Death date</span><input type="text" name="death_date" placeholder="1997"></label>
+  </div>
+  <label class="field"><span>Bio</span><textarea name="bio" rows="3"></textarea></label>
+  <button class="btn primary" type="submit">Add person</button>
+</form>
+
+<section>
+  <h2>Directory</h2>
+  {% if people %}
+    <table class="table">
+      <thead>
+        <tr><th>Name</th><th>Years</th><th>Relationships</th><th>Photos</th><th>Seeds</th></tr>
+      </thead>
+      <tbody>
+        {% for p in people %}
+          <tr>
+            <td><a href="/people/{{ p.id }}">{{ p.name }}</a></td>
+            <td>{{ p.birth_date or '—' }}{% if p.death_date %} – {{ p.death_date }}{% endif %}</td>
+            <td>{{ p.relationship_tags or '—' }}</td>
+            <td>{{ counts[p.id].confirmed }}</td>
+            <td>{{ counts[p.id].seeds }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="muted">No people in the directory yet.</p>
+  {% endif %}
+</section>
+{% endblock %}

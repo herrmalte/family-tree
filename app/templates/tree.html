@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Family tree · Family Archive{% endblock %}
+{% block content %}
+<h1>Family tree</h1>
+
+<form class="inline" method="get" action="/tree">
+  <label>
+    Root
+    <select name="root_id" onchange="this.form.submit()">
+      {% for p in people %}
+        <option value="{{ p.id }}" {% if root and root.id == p.id %}selected{% endif %}>{{ p.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+</form>
+
+{% if root %}
+<p class="muted">Showing relations up to 3 hops from <strong>{{ root.name }}</strong>.</p>
+<div class="tree-wrap">
+  <svg id="tree-svg" width="100%" height="560"></svg>
+</div>
+<script>
+  const NODES = {{ nodes | tojson }};
+  const EDGES = {{ edges | tojson }};
+  const ROOT_ID = {{ root.id }};
+
+  // Very small force-free layout: BFS layered positioning.
+  const levels = { [ROOT_ID]: 0 };
+  const queue = [ROOT_ID];
+  while (queue.length) {
+    const current = queue.shift();
+    const depth = levels[current];
+    for (const e of EDGES) {
+      if (e.from === current && !(e.to in levels)) {
+        levels[e.to] = depth + 1;
+        queue.push(e.to);
+      }
+    }
+  }
+  const perLevel = {};
+  for (const n of NODES) {
+    const d = levels[n.id] ?? 0;
+    (perLevel[d] = perLevel[d] || []).push(n);
+  }
+  const svg = document.getElementById('tree-svg');
+  const nsURI = 'http://www.w3.org/2000/svg';
+  const width = svg.clientWidth || 900;
+  const levelKeys = Object.keys(perLevel).map(Number).sort((a,b)=>a-b);
+  const layerHeight = 130;
+  const positions = {};
+  levelKeys.forEach((d, idx) => {
+    const row = perLevel[d];
+    row.forEach((node, i) => {
+      const x = ((i + 1) / (row.length + 1)) * width;
+      const y = 60 + idx * layerHeight;
+      positions[node.id] = { x, y, node };
+    });
+  });
+
+  // Edges first so nodes paint on top.
+  for (const e of EDGES) {
+    const a = positions[e.from], b = positions[e.to];
+    if (!a || !b) continue;
+    const line = document.createElementNS(nsURI, 'line');
+    line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
+    line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
+    line.setAttribute('class', 'edge ' + e.type);
+    svg.appendChild(line);
+    const mid = document.createElementNS(nsURI, 'text');
+    mid.setAttribute('x', (a.x + b.x) / 2);
+    mid.setAttribute('y', (a.y + b.y) / 2 - 4);
+    mid.setAttribute('class', 'edge-label');
+    mid.textContent = e.type;
+    svg.appendChild(mid);
+  }
+  for (const id in positions) {
+    const { x, y, node } = positions[id];
+    const g = document.createElementNS(nsURI, 'g');
+    g.setAttribute('class', 'node');
+    g.setAttribute('transform', `translate(${x},${y})`);
+    const link = document.createElementNS(nsURI, 'a');
+    link.setAttributeNS('http://www.w3.org/1999/xlink', 'href', '/people/' + node.id);
+    const rect = document.createElementNS(nsURI, 'rect');
+    rect.setAttribute('x', -80); rect.setAttribute('y', -24);
+    rect.setAttribute('width', 160); rect.setAttribute('height', 48);
+    rect.setAttribute('rx', 6);
+    link.appendChild(rect);
+    const name = document.createElementNS(nsURI, 'text');
+    name.setAttribute('class', 'node-name');
+    name.setAttribute('text-anchor', 'middle');
+    name.setAttribute('y', -4);
+    name.textContent = node.name;
+    link.appendChild(name);
+    if (node.birth || node.death) {
+      const years = document.createElementNS(nsURI, 'text');
+      years.setAttribute('class', 'node-years');
+      years.setAttribute('text-anchor', 'middle');
+      years.setAttribute('y', 14);
+      years.textContent = (node.birth || '?') + ' – ' + (node.death || '');
+      link.appendChild(years);
+    }
+    g.appendChild(link);
+    svg.appendChild(g);
+  }
+</script>
+{% else %}
+  <p class="muted">Add people to see a tree.</p>
+{% endif %}
+{% endblock %}

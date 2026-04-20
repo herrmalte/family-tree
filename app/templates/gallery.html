@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Gallery · Family Archive{% endblock %}
+{% block content %}
+<h1>Gallery</h1>
+
+<form class="filters" method="get" action="/gallery">
+  <label>
+    Album
+    <select name="album">
+      <option value="">All</option>
+      {% for a in albums %}
+        <option value="{{ a }}" {% if filters.album == a %}selected{% endif %}>{{ a }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>
+    Decade
+    <select name="decade">
+      <option value="">All</option>
+      {% for d in decades %}
+        <option value="{{ d }}" {% if filters.decade == d %}selected{% endif %}>{{ d }}s</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>
+    Family branch
+    <select name="branch">
+      <option value="">All</option>
+      {% for b in branches %}
+        <option value="{{ b }}" {% if filters.branch == b %}selected{% endif %}>{{ b }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>
+    Person
+    <select name="person_id">
+      <option value="">Anyone</option>
+      {% for p in people %}
+        <option value="{{ p.id }}" {% if filters.person_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>
+    Tag
+    <input type="text" name="tag" value="{{ filters.tag or '' }}" placeholder="tag">
+  </label>
+  <button class="btn" type="submit">Filter</button>
+  <a class="btn ghost" href="/gallery">Reset</a>
+</form>
+
+{% if active_person %}
+  <p class="muted">Showing photos confirmed to include <strong>{{ active_person.name }}</strong>.</p>
+{% endif %}
+
+{% if photos %}
+<div class="thumb-grid">
+  {% for photo in photos %}
+    <a class="thumb" href="/photos/{{ photo.id }}">
+      {% if photo.thumbnail_path %}
+        <img src="{{ photo.thumbnail_path | media_thumb }}" alt="{{ photo.filename }}" loading="lazy">
+      {% else %}
+        <div class="thumb-placeholder">{{ photo.filename }}</div>
+      {% endif %}
+      <div class="thumb-caption">
+        <span>{{ photo.date_estimate or '—' }}</span>
+        {% if photo.processing_status != 'done' %}
+          <span class="badge {{ photo.processing_status }}">{{ photo.processing_status }}</span>
+        {% endif %}
+      </div>
+    </a>
+  {% endfor %}
+</div>
+{% else %}
+  <p class="muted">No photos match these filters. <a href="/upload">Upload some →</a></p>
+{% endif %}
+{% endblock %}

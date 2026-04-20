@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}{{ photo.filename }} · Family Archive{% endblock %}
+{% block content %}
+<nav class="breadcrumb"><a href="/gallery">← Gallery</a></nav>
+
+<div class="photo-layout">
+  <div class="photo-main">
+    {% set photo_rel = photo.filepath.split('/')[-1] %}
+    <img class="photo-full" src="/media/photos/{{ photo_rel }}" alt="{{ photo.filename }}">
+    <div class="photo-meta">
+      <h1>{{ photo.filename }}</h1>
+      <dl>
+        <dt>Date</dt><dd>{{ photo.date_estimate or '—' }}</dd>
+        <dt>Description</dt><dd>{{ photo.description or '—' }}</dd>
+        <dt>Source</dt><dd>{{ photo.source or '—' }}</dd>
+        <dt>Album</dt><dd>{{ photo.album or '—' }}</dd>
+        <dt>Branch</dt><dd>{{ photo.family_branch or '—' }}</dd>
+        <dt>Tags</dt>
+        <dd>
+          {% for t in photo.tags | split_tags %}
+            <a class="tag" href="/gallery?tag={{ t }}">{{ t }}</a>
+          {% else %}—{% endfor %}
+        </dd>
+        <dt>Processing</dt>
+        <dd>
+          <span class="badge {{ photo.processing_status }}">{{ photo.processing_status }}</span>
+          <form class="inline" action="/photos/{{ photo.id }}/reprocess" method="post">
+            <button class="btn small ghost" type="submit">Re-run face detection</button>
+          </form>
+        </dd>
+      </dl>
+    </div>
+  </div>
+
+  <aside class="photo-side">
+    <h2>Faces in this photo</h2>
+    {% if photo.faces %}
+      <ul class="face-list">
+        {% for face in photo.faces %}
+          <li class="face-item">
+            <img class="face-thumb" src="{{ face.crop_path | media_face }}" alt="face crop">
+            <div class="face-details">
+              {% if face.is_seed %}
+                <span class="badge seed">seed</span>
+              {% endif %}
+              {% if face.person %}
+                <a href="/people/{{ face.person.id }}" class="person-link">{{ face.person.name }}</a>
+                {% if face.is_confirmed %}
+                  <span class="badge confirmed">confirmed</span>
+                {% else %}
+                  <span class="badge suggested">suggested · {{ '%.0f' % (face.confidence * 100) }}%</span>
+                {% endif %}
+              {% else %}
+                <span class="muted">Unidentified</span>
+              {% endif %}
+
+              <form class="inline" action="/faces/{{ face.id }}/assign" method="post">
+                <input type="hidden" name="next_url" value="/photos/{{ photo.id }}">
+                <select name="person_id" required>
+                  <option value="">Assign to…</option>
+                  {% for p in people %}
+                    <option value="{{ p.id }}" {% if face.person_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+                  {% endfor %}
+                </select>
+                <label class="inline-check"><input type="checkbox" name="as_seed" value="true"> seed</label>
+                <button class="btn small" type="submit">Save</button>
+              </form>
+
+              {% if face.person_id and not face.is_confirmed %}
+                <form class="inline" action="/faces/{{ face.id }}/confirm" method="post">
+                  <input type="hidden" name="next_url" value="/photos/{{ photo.id }}">
+                  <button class="btn small primary" type="submit">Confirm</button>
+                </form>
+              {% endif %}
+
+              {% if not face.is_rejected %}
+                <form class="inline" action="/faces/{{ face.id }}/reject" method="post">
+                  <input type="hidden" name="next_url" value="/photos/{{ photo.id }}">
+                  <button class="btn small ghost" type="submit">Reject</button>
+                </form>
+              {% endif %}
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">
+        {% if photo.processing_status == 'done' %}
+          No faces detected.
+        {% else %}
+          Face detection is pending.
+        {% endif %}
+      </p>
+    {% endif %}
+  </aside>
+</div>
+
+<details class="card">
+  <summary>Edit metadata</summary>
+  <form class="form" action="/photos/{{ photo.id }}/edit" method="post">
+    <div class="row">
+      <label class="field"><span>Date</span>
+        <input type="text" name="date_estimate" value="{{ photo.date_estimate or '' }}"></label>
+      <label class="field"><span>Source</span>
+        <input type="text" name="source" value="{{ photo.source or '' }}"></label>
+    </div>
+    <label class="field"><span>Description</span>
+      <textarea name="description" rows="3">{{ photo.description or '' }}</textarea></label>
+    <div class="row">
+      <label class="field"><span>Album</span>
+        <input type="text" name="album" value="{{ photo.album or '' }}"></label>
+      <label class="field"><span>Branch</span>
+        <input type="text" name="family_branch" value="{{ photo.family_branch or '' }}"></label>
+    </div>
+    <label class="field"><span>Tags</span>
+      <input type="text" name="tags" value="{{ photo.tags or '' }}"></label>
+    <div class="actions">
+      <button class="btn primary" type="submit">Save</button>
+    </div>
+  </form>
+</details>
+
+<form class="inline" action="/photos/{{ photo.id }}/delete" method="post"
+      onsubmit="return confirm('Delete this photo and all its faces?');">
+  <button class="btn danger" type="submit">Delete photo</button>
+</form>
+{% endblock %}

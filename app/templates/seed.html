@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Seed faces · Family Archive{% endblock %}
+{% block content %}
+<h1>Seed labeling</h1>
+<p class="muted">
+  Pick 2&ndash;3 clear photos per person and tag them as <strong>seeds</strong>.
+  Seeds are used as references when matching every other face.
+  {% if engine.active %}Active backend: <code>{{ engine.active }}</code>.{% endif %}
+  {% if engine.error %}<span class="error">Engine error: {{ engine.error }}</span>{% endif %}
+</p>
+
+<section class="card">
+  <h2>People &amp; seed counts</h2>
+  <form class="inline people-form" method="post" action="/people">
+    <input type="text" name="name" placeholder="Add a new person (name)" required>
+    <button class="btn" type="submit">Add person</button>
+  </form>
+  {% if people %}
+    <table class="table">
+      <thead><tr><th>Person</th><th>Seeds</th></tr></thead>
+      <tbody>
+        {% for p in people %}
+        <tr>
+          <td><a href="/people/{{ p.id }}">{{ p.name }}</a></td>
+          <td>{{ seed_counts.get(p.id, 0) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="muted">No people yet — add one above to begin seeding.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Candidate faces</h2>
+  {% if candidates %}
+  <div class="face-grid">
+    {% for face in candidates %}
+      <div class="face-card">
+        <a href="/photos/{{ face.photo_id }}" title="Open source photo">
+          <img src="{{ face.crop_path | media_face }}" alt="face">
+        </a>
+        <small class="muted">quality {{ '%.2f' % face.quality }}</small>
+        <form class="inline-form" action="/faces/{{ face.id }}/assign" method="post">
+          <input type="hidden" name="next_url" value="/faces/seed">
+          <input type="hidden" name="as_seed" value="true">
+          <select name="person_id" required>
+            <option value="">Seed as…</option>
+            {% for p in people %}
+              <option value="{{ p.id }}">{{ p.name }}</option>
+            {% endfor %}
+          </select>
+          <button class="btn small primary" type="submit">Seed</button>
+        </form>
+      </div>
+    {% endfor %}
+  </div>
+  {% else %}
+    <p class="muted">No candidate faces yet. Upload photos first.</p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Upload · Family Archive{% endblock %}
+{% block content %}
+<h1>Upload photos or documents</h1>
+<p class="muted">
+  Accepts JPEG, PNG, TIFF, and PDF. Multiple files at once share the metadata below.
+  Faces are detected asynchronously after upload.
+</p>
+
+<form class="card form" action="/upload" method="post" enctype="multipart/form-data">
+  <label class="field">
+    <span>Files</span>
+    <input type="file" name="files" multiple required
+           accept=".jpg,.jpeg,.png,.tif,.tiff,.pdf,image/*,application/pdf">
+  </label>
+
+  <div class="row">
+    <label class="field">
+      <span>Date / estimated range</span>
+      <input type="text" name="date_estimate" placeholder="e.g. 1947, or 1940-1945">
+    </label>
+    <label class="field">
+      <span>Source / origin</span>
+      <input type="text" name="source" placeholder="e.g. Grandma's attic box #3">
+    </label>
+  </div>
+
+  <label class="field">
+    <span>Description</span>
+    <textarea name="description" rows="3"
+              placeholder="Who, where, what's happening…"></textarea>
+  </label>
+
+  <div class="row">
+    <label class="field">
+      <span>Album</span>
+      <input type="text" name="album" list="album-options" placeholder="e.g. 1940s portraits">
+      <datalist id="album-options">
+        {% for a in albums %}<option value="{{ a }}">{% endfor %}
+      </datalist>
+    </label>
+    <label class="field">
+      <span>Family branch</span>
+      <input type="text" name="family_branch" list="branch-options" placeholder="e.g. Maternal / Smith">
+      <datalist id="branch-options">
+        {% for b in branches %}<option value="{{ b }}">{% endfor %}
+      </datalist>
+    </label>
+  </div>
+
+  <label class="field">
+    <span>Tags (comma-separated)</span>
+    <input type="text" name="tags" placeholder="wedding, black-and-white, outdoors">
+  </label>
+
+  <button class="btn primary" type="submit">Upload</button>
+</form>
+{% endblock %}
