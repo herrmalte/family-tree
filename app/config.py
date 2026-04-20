@@ -18,8 +18,9 @@ class Settings(BaseSettings):
     max_upload_mb: int = 50
 
     # Confidence thresholds for cosine similarity (1.0 = identical).
-    auto_match_threshold: float = 0.85
-    suggest_threshold: float = 0.55
+    # Defaults tuned for buffalo_s (MobileFaceNet); raise ~0.10 for buffalo_l.
+    auto_match_threshold: float = 0.80
+    suggest_threshold: float = 0.45
 
     # Historical photo preprocessing toggles.
     preprocess_clahe: bool = True
@@ -28,6 +29,9 @@ class Settings(BaseSettings):
 
     # Face detector — "insightface" or "face_recognition".
     face_backend: str = "insightface"
+    # InsightFace model pack. "buffalo_s" ≈ 17 MB (MobileFaceNet + SCRFD-500MF);
+    # "buffalo_l" ≈ 326 MB for highest accuracy; "buffalo_m" is in between.
+    face_model: str = "buffalo_s"
 
     @property
     def photos_dir(self) -> Path:

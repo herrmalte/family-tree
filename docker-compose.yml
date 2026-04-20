@@ -8,8 +8,10 @@ services:
       - DATABASE_URL=sqlite:////app/data/family_tree.db
       - DATA_DIR=/app/data
       - FACE_BACKEND=insightface
-      - AUTO_MATCH_THRESHOLD=0.85
-      - SUGGEST_THRESHOLD=0.55
+      # buffalo_s ≈ 17 MB. Swap to buffalo_l (~326 MB) for best accuracy.
+      - FACE_MODEL=buffalo_s
+      - AUTO_MATCH_THRESHOLD=0.80
+      - SUGGEST_THRESHOLD=0.45
     volumes:
       - ./data:/app/data
       # Cache InsightFace model downloads so the container doesn't re-fetch on restart.

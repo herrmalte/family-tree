@@ -47,7 +47,7 @@ class _InsightFaceEngine(_BaseEngine):
     def __init__(self) -> None:
         from insightface.app import FaceAnalysis  # type: ignore
 
-        self.app = FaceAnalysis(name="buffalo_l", providers=["CPUExecutionProvider"])
+        self.app = FaceAnalysis(name=settings.face_model, providers=["CPUExecutionProvider"])
         self.app.prepare(ctx_id=-1, det_size=(640, 640))
 
     def detect(self, bgr: np.ndarray) -> List[DetectedFace]:
