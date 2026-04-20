@@ -1,0 +1,20 @@
+services:
+  app:
+    build: .
+    image: family-tree:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:////app/data/family_tree.db
+      - DATA_DIR=/app/data
+      - FACE_BACKEND=insightface
+      - AUTO_MATCH_THRESHOLD=0.85
+      - SUGGEST_THRESHOLD=0.55
+    volumes:
+      - ./data:/app/data
+      # Cache InsightFace model downloads so the container doesn't re-fetch on restart.
+      - insightface_models:/root/.insightface
+    restart: unless-stopped
+
+volumes:
+  insightface_models:

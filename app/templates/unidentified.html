@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Unidentified faces · Family Archive{% endblock %}
+{% block content %}
+<h1>Unidentified faces</h1>
+<p class="muted">Faces without a match. Sorted by <strong>{{ sort }}</strong>.</p>
+
+<div class="inline">
+  <a class="btn {% if sort == 'quality' %}primary{% endif %}" href="/faces/unidentified?sort=quality">By quality</a>
+  <a class="btn {% if sort == 'recent' %}primary{% endif %}" href="/faces/unidentified?sort=recent">Most recent</a>
+</div>
+
+{% if faces %}
+<div class="face-grid">
+  {% for face in faces %}
+    <div class="face-card">
+      <a href="/photos/{{ face.photo_id }}" title="Open source photo">
+        <img src="{{ face.crop_path | media_face }}" alt="face">
+      </a>
+      <small class="muted">quality {{ '%.2f' % face.quality }}</small>
+      <form class="inline-form" action="/faces/{{ face.id }}/assign" method="post">
+        <input type="hidden" name="next_url" value="/faces/unidentified?sort={{ sort }}">
+        <input type="hidden" name="confirm" value="true">
+        <select name="person_id" required>
+          <option value="">Assign to…</option>
+          {% for p in people %}
+            <option value="{{ p.id }}">{{ p.name }}</option>
+          {% endfor %}
+        </select>
+        <label class="inline-check"><input type="checkbox" name="as_seed" value="true"> seed</label>
+        <button class="btn small primary" type="submit">Save</button>
+      </form>
+      <form class="inline" action="/faces/{{ face.id }}/reject" method="post">
+        <input type="hidden" name="next_url" value="/faces/unidentified?sort={{ sort }}">
+        <button class="btn small ghost" type="submit">Reject</button>
+      </form>
+    </div>
+  {% endfor %}
+</div>
+{% else %}
+  <p class="muted">Queue empty — every detected face is assigned or rejected.</p>
+{% endif %}
+{% endblock %}

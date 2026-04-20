@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Search · Family Archive{% endblock %}
+{% block content %}
+<h1>Search</h1>
+<form class="filters" method="get" action="/search">
+  <label>Text
+    <input type="text" name="q" value="{{ query.q }}" placeholder="name, description, tag">
+  </label>
+  <label>Tag
+    <input type="text" name="tag" value="{{ query.tag }}" placeholder="optional">
+  </label>
+  <label>Date from
+    <input type="text" name="date_from" value="{{ query.date_from }}" placeholder="1940">
+  </label>
+  <label>Date to
+    <input type="text" name="date_to" value="{{ query.date_to }}" placeholder="1949">
+  </label>
+  <label>Who's in it
+    <select name="person_id">
+      <option value="">Anyone</option>
+      {% for p in all_people %}
+        <option value="{{ p.id }}" {% if query.person_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button class="btn primary" type="submit">Search</button>
+</form>
+
+{% if people %}
+<section>
+  <h2>People ({{ people|length }})</h2>
+  <ul class="related-list">
+    {% for p in people %}
+      <li><a href="/people/{{ p.id }}">{{ p.name }}</a>
+        <span class="muted">{{ p.birth_date or '' }}{% if p.death_date %} – {{ p.death_date }}{% endif %}</span>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section>
+  <h2>Photos ({{ photos|length }})</h2>
+  {% if photos %}
+  <div class="thumb-grid">
+    {% for photo in photos %}
+      <a class="thumb" href="/photos/{{ photo.id }}">
+        {% if photo.thumbnail_path %}
+          <img src="{{ photo.thumbnail_path | media_thumb }}" alt="{{ photo.filename }}" loading="lazy">
+        {% else %}
+          <div class="thumb-placeholder">{{ photo.filename }}</div>
+        {% endif %}
+        <div class="thumb-caption">
+          <span>{{ photo.date_estimate or '—' }}</span>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+  {% else %}
+    <p class="muted">No matching photos.</p>
+  {% endif %}
+</section>
+{% endblock %}

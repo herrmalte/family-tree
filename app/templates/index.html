@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Home · Family Archive{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Family photo archive</h1>
+  <p class="muted">
+    Scan, tag, and identify the people in every family photograph — powered by AI face recognition.
+  </p>
+  <div class="actions">
+    <a class="btn primary" href="/upload">Upload photos</a>
+    <a class="btn" href="/gallery">Browse gallery</a>
+    <a class="btn" href="/faces/seed">Label seed faces</a>
+  </div>
+</section>
+
+<section class="stats">
+  <div class="stat"><strong>{{ totals.photos }}</strong><span>photos</span></div>
+  <div class="stat"><strong>{{ totals.faces }}</strong><span>faces</span></div>
+  <div class="stat"><strong>{{ totals.people }}</strong><span>people</span></div>
+  <div class="stat"><strong>{{ totals.unidentified }}</strong><span>unidentified</span></div>
+  <div class="stat"><strong>{{ totals.suggested }}</strong><span>awaiting review</span></div>
+</section>
+
+<section>
+  <h2>Recent uploads</h2>
+  {% if recent %}
+  <div class="thumb-grid">
+    {% for photo in recent %}
+      <a class="thumb" href="/photos/{{ photo.id }}">
+        {% if photo.thumbnail_path %}
+          <img src="{{ photo.thumbnail_path | media_thumb }}" alt="{{ photo.filename }}">
+        {% else %}
+          <div class="thumb-placeholder">{{ photo.filename }}</div>
+        {% endif %}
+      </a>
+    {% endfor %}
+  </div>
+  {% else %}
+    <p class="muted">No uploads yet. <a href="/upload">Upload your first photo →</a></p>
+  {% endif %}
+</section>
+{% endblock %}

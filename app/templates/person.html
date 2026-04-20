@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}{{ person.name }} · Family Archive{% endblock %}
+{% block content %}
+<nav class="breadcrumb"><a href="/people">← People</a></nav>
+
+<h1>{{ person.name }}</h1>
+<p class="muted">
+  {{ person.birth_date or '—' }}{% if person.death_date %} – {{ person.death_date }}{% endif %}
+  {% if person.relationship_tags %} · {{ person.relationship_tags }}{% endif %}
+</p>
+{% if person.bio %}<p>{{ person.bio }}</p>{% endif %}
+
+<div class="actions">
+  <a class="btn" href="/gallery?person_id={{ person.id }}">Photos featuring {{ person.name }}</a>
+  <a class="btn" href="/tree?root_id={{ person.id }}">Show in family tree</a>
+</div>
+
+<section>
+  <h2>Seed faces ({{ seed_faces|length }})</h2>
+  {% if seed_faces %}
+  <div class="face-grid small">
+    {% for face in seed_faces %}
+      <div class="face-card">
+        <a href="/photos/{{ face.photo_id }}"><img src="{{ face.crop_path | media_face }}" alt="seed"></a>
+        <form class="inline" action="/faces/{{ face.id }}/unseed" method="post">
+          <input type="hidden" name="next_url" value="/people/{{ person.id }}">
+          <button class="btn small ghost" type="submit">Unseed</button>
+        </form>
+      </div>
+    {% endfor %}
+  </div>
+  {% else %}
+    <p class="muted">No seed faces yet — <a href="/faces/seed">seed some now</a>.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Confirmed photos ({{ confirmed_faces|length }})</h2>
+  {% if confirmed_faces %}
+  <div class="face-grid small">
+    {% for face in confirmed_faces %}
+      <a class="face-card" href="/photos/{{ face.photo_id }}">
+        <img src="{{ face.crop_path | media_face }}" alt="confirmed">
+      </a>
+    {% endfor %}
+  </div>
+  {% else %}
+    <p class="muted">No confirmed photos yet.</p>
+  {% endif %}
+</section>
+
+{% if suggested_faces %}
+<section>
+  <h2>Suggested ({{ suggested_faces|length }})</h2>
+  <p class="muted">Suggestions for this person awaiting review.</p>
+  <div class="face-grid small">
+    {% for face in suggested_faces %}
+      <div class="face-card">
+        <a href="/photos/{{ face.photo_id }}"><img src="{{ face.crop_path | media_face }}" alt="suggested"></a>
+        <small class="muted">{{ '%.0f' % (face.confidence * 100) }}%</small>
+        <form class="inline" action="/faces/{{ face.id }}/confirm" method="post">
+          <input type="hidden" name="next_url" value="/people/{{ person.id }}">
+          <button class="btn small primary" type="submit">Confirm</button>
+        </form>
+        <form class="inline" action="/faces/{{ face.id }}/reject" method="post">
+          <input type="hidden" name="next_url" value="/people/{{ person.id }}">
+          <button class="btn small ghost" type="submit">Reject</button>
+        </form>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Family relationships</h2>
+  {% if related %}
+    <ul class="related-list">
+      {% for related_id, (link, related_person) in related.items() %}
+        {% if related_person %}
+        <li>
+          <span class="badge rel">{{ link.relationship_type }}</span>
+          <a href="/people/{{ related_person.id }}">{{ related_person.name }}</a>
+          <form class="inline" action="/people/{{ person.id }}/links/{{ link.id }}/delete" method="post">
+            <button class="btn small ghost" type="submit">Remove</button>
+          </form>
+        </li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">No relationships recorded.</p>
+  {% endif %}
+  <form class="inline-form" method="post" action="/people/{{ person.id }}/links">
+    <select name="related_person_id" required>
+      <option value="">Related person…</option>
+      {% for p in all_people %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+    </select>
+    <select name="relationship_type" required>
+      {% for t in relationship_types %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+    </select>
+    <button class="btn small" type="submit">Add link</button>
+  </form>
+</section>
+
+<details class="card">
+  <summary>Edit person</summary>
+  <form class="form" action="/people/{{ person.id }}/edit" method="post">
+    <div class="row">
+      <label class="field"><span>Name</span><input type="text" name="name" value="{{ person.name }}"></label>
+      <label class="field"><span>Relationship tags</span>
+        <input type="text" name="relationship_tags" value="{{ person.relationship_tags or '' }}"></label>
+    </div>
+    <div class="row">
+      <label class="field"><span>Birth</span>
+        <input type="text" name="birth_date" value="{{ person.birth_date or '' }}"></label>
+      <label class="field"><span>Death</span>
+        <input type="text" name="death_date" value="{{ person.death_date or '' }}"></label>
+    </div>
+    <label class="field"><span>Bio</span><textarea name="bio" rows="3">{{ person.bio or '' }}</textarea></label>
+    <button class="btn primary" type="submit">Save</button>
+  </form>
+</details>
+
+<form class="inline" method="post" action="/people/{{ person.id }}/delete"
+      onsubmit="return confirm('Delete {{ person.name }}? Face assignments will be cleared.');">
+  <button class="btn danger" type="submit">Delete person</button>
+</form>
+{% endblock %}
