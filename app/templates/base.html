@@ -3,18 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
   <title>{% block title %}Family Tree Photo Archive{% endblock %}</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
   <header class="site-header">
     <a class="brand" href="/">Family Archive</a>
-    <nav class="nav">
+    <nav class="nav" aria-label="Primary">
       <a href="/gallery">Gallery</a>
       <a href="/upload">Upload</a>
       <a href="/people">People</a>
       <a href="/tree">Tree</a>
-      <a href="/faces/seed">Seed faces</a>
+      <a href="/faces/seed">Seeds</a>
       <a href="/faces/review">Review</a>
       <a href="/faces/unidentified">Unidentified</a>
       <a href="/search">Search</a>
@@ -24,7 +25,7 @@
     {% block content %}{% endblock %}
   </main>
   <footer class="site-footer">
-    <span>Self-hosted family tree archive.</span>
+    <span>Self-hosted family archive · {{ "now"|default("2026") }}</span>
   </footer>
 </body>
 </html>
